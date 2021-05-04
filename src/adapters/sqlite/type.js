@@ -21,6 +21,7 @@ export type MigrationEvents = {
 
 export type SQLiteAdapterOptions = $Exact<{
   dbName?: string,
+  password?: string,
   schema: AppSchema,
   migrations?: SchemaMigrations,
   // (deprecated) use JSI instead
@@ -54,9 +55,9 @@ export type SyncReturn<T> =
   | { status: 'error', code: string, message: string }
 
 export type NativeDispatcher = $Exact<{
-  initialize: (string, SchemaVersion, ResultCallback<InitializeStatus>) => void,
-  setUpWithSchema: (string, SQL, SchemaVersion, ResultCallback<void>) => void,
-  setUpWithMigrations: (string, SQL, SchemaVersion, SchemaVersion, ResultCallback<void>) => void,
+  initialize: (string, string, SchemaVersion, ResultCallback<InitializeStatus>) => void,
+  setUpWithSchema: (string, string, SQL, SchemaVersion, ResultCallback<void>) => void,
+  setUpWithMigrations: (string, string, SQL, SchemaVersion, SchemaVersion, ResultCallback<void>) => void,
   find: (TableName<any>, RecordId, ResultCallback<DirtyFindResult>) => void,
   query: (TableName<any>, SQL, ResultCallback<DirtyQueryResult>) => void,
   count: (SQL, ResultCallback<number>) => void,
@@ -88,10 +89,11 @@ export type NativeBridgeType = {
   removeLocal: (ConnectionTag, string) => Promise<void>,
 
   // Synchronous methods
-  initializeSynchronous?: (ConnectionTag, string, SchemaVersion) => SyncReturn<InitializeStatus>,
-  setUpWithSchemaSynchronous?: (ConnectionTag, string, SQL, SchemaVersion) => SyncReturn<void>,
+  initializeSynchronous?: (ConnectionTag, string, string, SchemaVersion) => SyncReturn<InitializeStatus>,
+  setUpWithSchemaSynchronous?: (ConnectionTag, string, string, SQL, SchemaVersion) => SyncReturn<void>,
   setUpWithMigrationsSynchronous?: (
     ConnectionTag,
+    string,
     string,
     SQL,
     SchemaVersion,

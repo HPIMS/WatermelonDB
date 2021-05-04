@@ -56,6 +56,8 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
 
   _dbName: string
 
+  _password: string
+
   _dispatcherType: DispatcherType
 
   _dispatcher: NativeDispatcher
@@ -64,11 +66,12 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
 
   constructor(options: SQLiteAdapterOptions): void {
     // console.log(`---> Initializing new adapter (${this._tag})`)
-    const { dbName, schema, migrations, migrationEvents } = options
+    const { dbName, password, schema, migrations, migrationEvents } = options
     this.schema = schema
     this.migrations = migrations
     this._migrationEvents = migrationEvents
     this._dbName = this._getName(dbName)
+    this._password = password || ''
     this._dispatcherType = getDispatcherType(options)
     // Hacky-ish way to create an object with NativeModule-like shape, but that can dispatch method
     // calls to async, synch NativeModule, or JSI implementation w/ type safety in rest of the impl
@@ -111,6 +114,7 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
     // $FlowFixMe
     const clone = new SQLiteAdapter({
       dbName: this._dbName,
+      password: this._password,
       schema: this.schema,
       synchronous: this._dispatcherType === 'synchronous',
       jsi: this._dispatcherType === 'jsi',
@@ -139,7 +143,7 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
     // This is to speed up the launch (less to do and pass through bridge), and avoid repeating
     // migration logic inside native code
     const status = await toPromise(callback =>
-      this._dispatcher.initialize(this._dbName, this.schema.version, callback),
+      this._dispatcher.initialize(this._dbName, this._password, this.schema.version, callback),
     )
 
     // NOTE: Race condition - logic here is asynchronous, but synchronous-mode adapter does not allow
@@ -174,6 +178,7 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
         await toPromise(callback =>
           this._dispatcher.setUpWithMigrations(
             this._dbName,
+            this._password,
             this._encodeMigrations(migrationSteps),
             databaseVersion,
             this.schema.version,
@@ -206,6 +211,7 @@ export default class SQLiteAdapter implements DatabaseAdapter, SQLDatabaseAdapte
     await toPromise(callback =>
       this._dispatcher.setUpWithSchema(
         this._dbName,
+        this._password,
         this._encodedSchema(),
         this.schema.version,
         callback,
